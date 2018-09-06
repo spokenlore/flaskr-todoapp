@@ -6,5 +6,11 @@ else
    eval $(python3 db.py)
 fi
 
+if command -v python3 &>/dev/null; then
+    echo Python 3 is installed
+else
+    echo Python 3 is not installed
+fi
+
 export FLASK_APP=flaskr
 eval $(flask run)
