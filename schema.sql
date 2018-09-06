@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS user (
 	);
 
 CREATE TABLE IF NOT EXISTS items(
-	key int primary key NOT NULL AUTOINCREMENT,
+	key int primary key NOT NULL, 
 	text varchar(30) NOT NULL,	
 	status boolean,
     user_username varchar(30),

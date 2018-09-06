@@ -1,5 +1,10 @@
-if [ -f  ]; then
-   echo "File $FILE exists."
+if [ -f "flaskr.db" ]; then
+   echo "Database exists."
 else
-   echo "File $FILE does not exist."
+   echo "Database does not exist."
+   echo "Proceeding to create database."
+   eval $(python3 db.py)
 fi
+
+eval $(export FLASK_APP=flaskr)
+eval $(flask run)

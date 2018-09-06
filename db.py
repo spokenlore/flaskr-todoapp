@@ -48,5 +48,4 @@ def close_db(error):
 
 
 if __name__ == '__main__':
-    app.run()
-
+    init_db()
