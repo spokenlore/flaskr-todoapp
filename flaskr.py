@@ -20,11 +20,9 @@ app = Flask(__name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE='/tmp/flaskr.db',
+    DATABASE='./flaskr.db',
     DEBUG=True,
     SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
@@ -41,7 +39,7 @@ def init_db():
     with app.app_context():
         db = get_db()
         with app.open_resource('schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
+           db.cursor().executescript(f.read())
         db.commit()
 
 
@@ -63,16 +61,17 @@ def close_db(error):
 
 @app.route('/')
 def show_entries():
-    db = get_db()
-    cur = db.execute('select title, text from entries order by id desc')
-    entries = cur.fetchall()
-    return render_template('show_entries.html', entries=entries)
+    if session['logged_in'] == True:
+        db = get_db()
+        cur = db.execute('select key, text, status, user_username from items')
+        entries = cur.fetchall()
+        return render_template('show_entries.html', entries=entries)
+    else:
+        return redirect(url_for('register'))
 
 
 @app.route('/add', methods=['POST'])
 def add_entry():
-    if not session.get('logged_in'):
-        abort(401)
     db = get_db()
     db.execute('insert into entries (title, text) values (?, ?)',
                  [request.form['title'], request.form['text']])
@@ -81,28 +80,28 @@ def add_entry():
     return redirect(url_for('show_entries'))
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    db = get_db()
+    if request.method == 'POST':
+        if request.form['username'] != "":
+            db.execute('insert into user (username) values (?)', (request.form['username'],))
+    return render_template('register.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
+        db = get_db()
+        cur = db.execute('select (?) from user', (request.form['username'],))
+        usernames = cur.fetchall()
+        if len(usernames) > 0:
             session['logged_in'] = True
             flash('You were logged in')
             return redirect(url_for('show_entries'))
+        else:
+            error = "User has not been registered"
     return render_template('login.html', error=error)
 
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('show_entries'))
-
-
 if __name__ == '__main__':
-    init_db()
     app.run()
