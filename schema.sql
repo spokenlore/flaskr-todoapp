@@ -1,9 +1,8 @@
 CREATE TABLE IF NOT EXISTS user (
-	username varchar(30) primary key NOT NULL
+	username varchar(30) NOT NULL
 	);
 
 CREATE TABLE IF NOT EXISTS items(
-	key int primary key NOT NULL, 
 	text varchar(30) NOT NULL,	
 	status boolean,
     user_username varchar(30),

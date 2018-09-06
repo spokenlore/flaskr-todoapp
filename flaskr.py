@@ -1,18 +1,17 @@
-# -*- coding: utf-8 -*-
 """
     Flaskr
     ~~~~~~
 
-    A microblog example application written as Flask tutorial with
-    Flask and sqlite3.
+    A simple todoapp adapted from code written by Armin Ronacher (github.com/silshack/flaskr)
 
-    :copyright: (c) 2010 by Armin Ronacher.
+    :copyright: (c) 2018 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
 from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
+import sys
 
 
 # create our little application :)
@@ -50,25 +49,30 @@ def close_db(error):
         g.sqlite_db.close()
 
 
-@app.route('/')
+@app.route('/show_entries')
 def show_entries():
     if session['logged_in'] == True:
         db = get_db()
-        cur = db.execute('select key, text, status, user_username from items')
+        cur = db.execute('select text, status, user_username from items')
         entries = cur.fetchall()
+        for row in entries:
+            print('Row found: %s, %s, %s' % (row[0], row[1], row[2]), file=sys.stderr)
         return render_template('show_entries.html', entries=entries)
     else:
-        return redirect(url_for('register'))
+        return redirect(url_for('register'), error="You did not log in. Register?")
 
 
 @app.route('/add', methods=['POST'])
-def add_entry():
+def add():
     db = get_db()
-    db.execute('insert into entries (title, text) values (?, ?)',
-                 [request.form['title'], request.form['text']])
-    db.commit()
-    flash('New entry was successfully posted')
-    return redirect(url_for('show_entries'))
+    if db.execute("select * from items where user_username = '%s'" % (request.form['username'])):
+        db.execute('insert into items (text, user_username, status) values (?, ?, ?)',
+                 [request.form['text'], request.form['username'], True if request.form['status'] == "on" else False])
+        db.commit()
+        flash('New entry was successfully posted')
+        return redirect(url_for('show_entries'))
+    else:
+        return redirect(url_for('show_entries'), error="Save data was invalid.")
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -78,9 +82,11 @@ def register():
         if request.form['username'] != "":
             print("\n")
             db.execute('insert into user (username) values (?)', (request.form['username'],))
-            cur = db.execute('select * from user')
-            usernames = cur.fetchall()
-            print(usernames)
+            db.commit()
+    cur = db.execute('select * from user')
+    usernames = cur.fetchall()
+    for row in usernames:
+        print('Username found: %s' % row[0], file=sys.stderr)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -89,16 +95,26 @@ def login():
     if request.method == 'POST':
         db = get_db()
         cur = db.execute('select * from user')
-#, (request.form['username'],))
+
         usernames = cur.fetchall()
-        print(usernames)
-        if len(usernames) > 0:
-            session['logged_in'] = True
-            flash('You were logged in')
+        for rows in usernames:
+            if rows[0] == request.form['username']:
+                session['logged_in'] = True
+                session['username'] = request.form['username']
+                flash('You were logged in')
             return redirect(url_for('show_entries'))
-        else:
-            error = "User has not been registered"
+        
+        error = "User has not been registered"
+        return render_template('register.html', error=error)
     return render_template('login.html', error=error)
+
+@app.route('/delete', methods=['DELETE'])
+def delete_entry():
+    error = None
+    db = get_db()
+    cur = db.execute("DELETE * from items where user_username = %s AND text = %s" % (request.form("h2_username"), request.form("h2_text")))
+    db.commit
+    return redirect(url_for('show_entries'))
 
 if __name__ == '__main__':
     app.run()

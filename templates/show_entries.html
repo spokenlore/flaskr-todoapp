@@ -1,19 +1,30 @@
 {% extends "layout.html" %}
 {% block body %}
-    <form action="{{ url_for('add_entry') }}" method=post class=add-entry>
+    {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+    <form action="{{ url_for('add') }}" method=post class=add-entry>
       <dl>
         <dt>Text:
         <dd><textarea name=text rows=5 cols=40></textarea>
+        <dt>Username:
+        <dd><textarea name=username rows=1 cols=40></textarea>
         <dt>Status:
         <dd><input type="checkbox" name=status>
-        <dd><input type=submit value=Share>
+        <dd><input type= submit value=Share>
       </dl>
     </form>
   <ul class=entries>
   {% for entry in entries %}
-    <li><h2>{{ entry.key }}.{{ entry.text }}</h2><h2>{{ entry.user }} : {{ entry.status|safe }}</h2>
+  <form action="{{ url_for('delete_entry') }}" method=DELETE class=delete_entry>
+    <li>
+      <h2 name="h2_username">Username: {{ entry.user_username }}</h2> 
+      <h2 name="h2_text">Item: {{ entry.text }}</h2> 
+      <h2>Status: <input name="h2_status" type="checkbox" {{ entry.status }}/></h2>
+      <input type= submit value=Delete>
+    </li>
+  </form>
+    <b>
   {% else %}
-    <li><em>Unbelievable.  No entries here so far</em>
+    <li><em>Unbelievable. No entries here so far</em>
   {% endfor %}
   </ul>
 {% endblock %}
