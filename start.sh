@@ -6,5 +6,5 @@ else
    eval $(python3 db.py)
 fi
 
-eval $(export FLASK_APP=flaskr)
+export FLASK_APP=flaskr
 eval $(flask run)

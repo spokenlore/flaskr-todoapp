@@ -34,15 +34,6 @@ def connect_db():
     return rv
 
 
-def init_db():
-    """Creates the database tables."""
-    with app.app_context():
-        db = get_db()
-        with app.open_resource('schema.sql', mode='r') as f:
-           db.cursor().executescript(f.read())
-        db.commit()
-
-
 def get_db():
     """Opens a new database connection if there is none yet for the
     current application context.
@@ -85,7 +76,11 @@ def register():
     db = get_db()
     if request.method == 'POST':
         if request.form['username'] != "":
+            print("\n")
             db.execute('insert into user (username) values (?)', (request.form['username'],))
+            cur = db.execute('select * from user')
+            usernames = cur.fetchall()
+            print(usernames)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -93,8 +88,10 @@ def login():
     error = None
     if request.method == 'POST':
         db = get_db()
-        cur = db.execute('select (?) from user', (request.form['username'],))
+        cur = db.execute('select * from user')
+#, (request.form['username'],))
         usernames = cur.fetchall()
+        print(usernames)
         if len(usernames) > 0:
             session['logged_in'] = True
             flash('You were logged in')
